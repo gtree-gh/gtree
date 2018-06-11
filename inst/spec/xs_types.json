@@ -14,7 +14,8 @@
       {
         "name": "varpar",
         "title": "Variants and Parameters",
-        "special": true
+        "special": true,
+        "help_type": "varpar"
       },
       {
         "name": "stages",
@@ -38,7 +39,7 @@
         "name": "descr",
         "type": "character",
         "inputType": "textArea",
-        "help": "Here you can add an optional description of the stage. The description will not shown to subjects. It is only used for documentation purposes."
+        "help": "Here you can add an optional description of the stage. It is only used for documentation purposes."
       },
       {
         "name": "player",
@@ -58,25 +59,29 @@
         "inputType": "textArea",
         "multiple": true,
         "onlyDefined": true,
-        "cases": true
+        "cases": true,
+        "help": "Enter here the names of all variables (actions, moves of nature, or computed variable) that the player observes in this stage. Write variables as a JSON array, e.g.<br><pre>[offer, punishment]</pre><br> The observed variables will be used to construct the approbriate information sets in the extensive form game representation.<br><br>Note that a player is always assumed to know all the parameters of the game and all actions she has played herself in an earlier stage. So you don't have to add such variables to the observe field."
       },
       {
         "expanded": true,
         "name": "nature",
         "childType": "randomVar",
-        "isList": true
+        "isList": true,
+        "help": "Here you can specify a move by nature, i.e. a random variable. Click-right on this field to add a new move by nature in this stage. Note that gtree only allows random variables that take finitely many values to be able to construct a game tree."
       },
       {
         "name": "compute",
         "childType": "transformation",
         "expanded": true,
-        "isList": true
+        "isList": true,
+        "help": "Click right to add a new computed variable. A computed variable or transformation is a deterministic function of previously generated variables (parameters, actions, move of nature or other computed variables). In principle, you can use any vectorized R function to create a transformation.<br><h4>Payoff</h4>A special transformation are payoff variables, like <pre>payoff_1</pre> for player 1. You should make sure that in every experimental run payoffs are computed for every player exactly once. Typically, you could compute payoffs for all players in a final result state.<br><h4>Case distinctions</h4>The function <pre>case_distinction</pre> contained in gtree may be helpful if you want to assign a variable based on a simple case distinction.<br> Your transformation should not call a random number generator. To create random variables, use a move of nature instead."
       },
       {
         "name": "actions",
         "expanded": true,
         "childType": "action",
-        "isList": true
+        "isList": true,
+        "help": "Click right to add a new action. Actions can only be added to stages that specify a single player. The player will choose a value from the set associated with the action in this stage. You can add more than one action at a stage."
       },
       {
         "name": "special",

@@ -13,7 +13,7 @@ examples.xsApp = function() {
 }
 
 
-xsApp = function(projects.dir, project=1, otree.dir=NULL, otree.url="http://localhost:8000", never.load.tg = FALSE, demo.mode=FALSE) {
+xsApp = function(projects.dir, project=1, use.otree=FALSE, otree.dir=NULL, otree.url="http://localhost:8000", never.load.tg = FALSE, demo.mode=FALSE) {
   restore.point("xsApp")
 
   library(shinyEventsUI)
@@ -24,6 +24,7 @@ xsApp = function(projects.dir, project=1, otree.dir=NULL, otree.url="http://loca
   app$xs = xs = new.env()
 
   xs$projects.dir = projects.dir
+  xs$use.otree = use.otree
   xs$otree.dir = otree.dir
   xs$otree.url = otree.url
   xs$never.load.tg = never.load.tg
@@ -167,12 +168,12 @@ xs.ui = function(app=getApp(), xs=app$xs) {
 
   panes = jqueryLayoutPanes(id="xsPanes",json.opts=json.opts,
   	north = div(menubar,thinHR()),
-    west = tagList(
+    west = div(
       HTML("<table><tr><td>"),
       smallButton("editPrefsBtn","Preferences"),
       HTML("</td><td>"),
       smallButton("showJobsBtn","Jobs"),
-      HTML("</td>,</tr></table>"),
+      HTML("</td></tr></table>"),
       tree,
       cm
     ),
@@ -539,7 +540,8 @@ xs.game.ui = function(gameId, xs = app$xs, app=getApp()) {
   ui = tagList(
     smallButton(btnId,"Save"),
     smallButton(checkBtnId,"Check"),
-    smallButton(ns("otreeBtn"),"To OTree"),
+    if (xs$use.otree)
+      smallButton(ns("otreeBtn"),"To OTree"),
     smallButton(ns("eqBtn"),"Equilibria"),
     smallButton(ns("runBtn"),"Run"),
     uiOutput(ns("msg")),
