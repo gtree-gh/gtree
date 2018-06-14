@@ -218,7 +218,7 @@ pref.class.info.panels = function(pref.classes) {
     ex = pref.class.example.code(pc, class)
     pre.html = HTML(paste0('<pre style="tab-size: 4"><span class="inner-pre" style="font-size: small">',ex,'</span></pre>'))
     tabPanel(title=str.left.of(class,"Util"),value=class,
-      HTML(paste0("<p style='padding-top: 4px; line-height: 1.1'>",pc$descr," Example:</p>")), pre.html
+      HTML(paste0("<p style='padding-top: 4px; line-height: 1.1'>",pc$descr,"</p>")), pre.html
     )
   })
   ui = withMathJax(do.call(tabsetPanel, c(list(id="prefInfoTabset"),li)))

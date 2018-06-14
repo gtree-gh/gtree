@@ -33,7 +33,7 @@ ineqAv:
 
 lossAv:
 	descr: >
-	  Loss aversion with a single reference point \(r_i\) for each player<br>
+	  Loss aversion with a reference point \(r_i\) for each player i.<br>
 	  If \(x_i\) is the monetary payoff of player i, her utility is given by
 	  the following simple linear specification of loss aversion:
 
@@ -68,9 +68,17 @@ unifLossAv:
 	descr: >
 	  This is an alternative formulation of loss aversion,
 		with a continuum of reference points
-		that are uniformely distributed between rmin and rmax.<br>
-		Between rmin and rmax, the resulting utility function then has
-		a quadratic form, while beyond rmin or rmax it is linear.
+		that are uniformely distributed between <code>rmin</code> and <code>rmax</code>.
+		<br>Between <code>rmin</code> and <code>rmax</code>, the resulting utility function is quadratic
+		function that starts with slope <code>lambda</code> at <code>rmin</code>
+		and flattens to slope <code>1</code> at <code>rmax</code>. For payoffs
+		below <code>rmin</code> or above <code>rmax</code> the utility function is
+		linear with slope <code>lambda</code> and <code>1</code>, respectively,
+		like in the loss and gain domains for a single reference point.
+		<br>This formulation of loss aversion thus allows for evaluationg narrowly
+		losses and gains taking into account only the payoffs of the game.
+		Yet, it avoids a kink at some fixed reference point, but resembles a
+		quadratic formulation of risk aversion instead.
 	defaultName: 'unifLossAv_min_max'
 	params:
 		rmin:
@@ -92,6 +100,8 @@ WSumMin:
 		<code>min_weight</code> times the minimal payoff.
 		<br><br>For <code>min_weight=0</code>, everybody plays as if to
 		maximize the expected sum of utility (utilitarian welfare).
+		Such preference can be helpful, if you want to compute
+		first best outcomes of a game.
 	defaultName: 'WSumMin_1'
 	params:
 		min_weight:
