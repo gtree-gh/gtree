@@ -363,7 +363,7 @@ xeq.tg.info.df = function(xeq,ids = names(xeq$tg.li),...) {
 
 	mat = matrix(nrow=9, byrow = TRUE,c(
 		"Outcomes",no.oco,
-		"Info sets (avg. # moves)", paste0(no.ise," (",avg.moves,")"),
+		"Info sets (avg. moves)", paste0(no.ise," (",avg.moves,")"),
 		"Subgames", no.sg,
 		"Strat-profiles...",rep("",length(ids)),
 		"...normal-form",no.all.sp,

@@ -152,15 +152,18 @@
         "name": "label"
       },
       {
-        "name": "descr",
-        "inputType": "textArea",
-        "help": "You can write a decription of the game. You can use HTML tags."
+        "name": "tags",
+        "setVar": "gameTags"
       },
       {
-        "name": "tags",
-        "setVar": "gameTags",
-        "help": "You can specify some tags that apply to this game.",
-        "multiple": true
+        "name": "descr",
+        "inputType": "textArea"
+      },
+      {
+        "name": "articles"
+      },
+      {
+        "name": "variantOf"
       }
     ]
   },

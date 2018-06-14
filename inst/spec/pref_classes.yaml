@@ -92,19 +92,19 @@ unifLossAv:
 			default: 2
 	fun: unifLossAvUtil
 
-WSumMin:
+OwnSumMin:
 	descr: >
-	  This preferences assume that all
-		players maximize total welfare W
-		defined as the sum of all payoffs plus
-		<code>min_weight</code> times the minimal payoff.
-		<br><br>For <code>min_weight=0</code>, everybody plays as if to
-		maximize the expected sum of utility (utilitarian welfare).
-		Such preference can be helpful, if you want to compute
-		first best outcomes of a game.
-	defaultName: 'WSumMin_1'
+	  Players maximize a weighted sum of their own payoff,
+	  the total payoff of all players, and the minimal payoff among all players.
+	defaultName: 'OwnSumMin_111'
 	params:
-		min_weight:
-			descr: 'The weight on the minimal payoff.'
+		own_weight:
+			descr: 'weight on own payoff'
 			default: 1
-	fun: WSumMin
+		sum_weight:
+			descr: 'weight total payoff'
+			default: 1
+		min_weight:
+			descr: 'weight on minimal payoff'
+			default: 1
+	fun: OwnSumMin

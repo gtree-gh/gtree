@@ -27,16 +27,11 @@ unifLossAvMinMax:
     rmax: 'max(payoff_i)'
     lambda: 2
 
-# all players want to maximize the
-# welfare function W=sum(payoff_i) + min(payoff_i)
-WSumMin_1:
-  class: WSumMin
+# All players maximize the sum of their own payoff,
+# total payoff and the minimum payoff among all players
+OwnSumMin_111:
+  class: OwnSumMin
   params:
+    own_weight: 1
+    sum_weight: 1
     min_weight: 1
-
-# all players want to maximize the sum
-# of all players payoffs
-WSum:
-  class: WSumMin
-  params:
-    min_weight: 0

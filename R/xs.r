@@ -192,7 +192,7 @@ xs.ui = function(app=getApp(), xs=app$xs) {
         padding-start: 2em;
       }")),
       tabsetPanel(
-        tabPanel("Help", div(id="xsHelpUI",style="padding-left: 5px; padding-right: 5px; font-size: 0.9em;"))
+        tabPanel("Help", div(id="xsHelpUI",style="padding-left: 5px; padding-right: 5px; font-size: 0.9em; line-height: 1.2"))
       )
     )
   )
@@ -253,8 +253,15 @@ xs.ui = function(app=getApp(), xs=app$xs) {
   ui
 }
 
-xs.show.help = function(id=NULL, html = xecon.glob$help.texts[[id]]) {
+xs.show.help = function(id=NULL, html = xecon.glob$help.texts[[id]],jg=NULL) {
   restore.point("xs.show.help")
+  if (id=="game") {
+    if (!is.null(jg$gameInfo$descr)) {
+      descr = md2html(jg$gameInfo$descr, use.commonmark = TRUE)
+      html=paste0("<h4>", jg$gameId,"</h4>",descr, html)
+    }
+  }
+
   shinyEvents::setInnerHTML("xsHelpUI", html)
 }
 
@@ -510,18 +517,20 @@ xs.show.game.tab = function(gameId, xs=app$xs, app=getApp()) {
   tab=list(id=tabId,caption=gameId, closable=TRUE,div_id = divId, keep_closed_content=TRUE)
   w2tabs.add(id="xsTabs", tabs=list(tab))
 
-  ui = xs.game.ui(gameId)
+  jg = try(get.jg(gameId))
+  ui = xs.game.ui(gameId, jg=jg)
+  if (is(jg,"try-error")) jg=NULL
   appendToHTML(selector="#mainDiv", as.character(hidden_div(id=divId, ui)))
   w2tabs.select("xsTabs", tabId)
-  xs.show.help("game")
+  xs.show.help("game", jg=jg)
 }
 
 
-xs.game.ui = function(gameId, xs = app$xs, app=getApp()) {
+xs.game.ui = function(gameId, xs = app$xs, app=getApp(), jg= try(get.jg(gameId))) {
   restore.point("xs.game.edit.ui")
   ns = NS(gameId)
 
-	jg = try(get.jg(gameId))
+	#jg = try(get.jg(gameId))
 	cat("\n",jg$stages[[1]]$name)
   if (is(jg,"try-error")) {
     ui = tagList(h4("Error when parsing json file:"), p(as.character(jg)))
