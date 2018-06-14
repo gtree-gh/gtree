@@ -25,9 +25,15 @@ xs.show.prefs.tab = function(xs=app$xs, app=getApp()) {
   divId = paste0("div_prefs")
   tab=list(id=tabId,caption="Prefs", closable=TRUE,div_id = divId)
   w2tabs.add(id="xsTabs", tabs=list(tab))
+
+  if (is.null(xs[["pref.classes"]]))
+    xs$pref.classes = load.pref.classes()
+
   ui = xs.prefs.ui()
   appendToHTML(selector="#mainDiv", as.character(hidden_div(id=divId, ui)))
   w2tabs.select("xsTabs", tabId)
+
+  xs.show.help("prefs")
 }
 
 xs.prefs.ui = function(xs = app$xs, app=getApp(),...) {
@@ -43,8 +49,12 @@ xs.prefs.ui = function(xs = app$xs, app=getApp(),...) {
   txt = merge.lines(readLines(file))
 	ns = NS("prefs-edit")
   ui = list(
+    h5("Preferences Classes:"),
+    pref.class.info.panels(xs$pref.classes),
+
+    h5("Specified Preferences:"),
   	HTML("<table><tr><td>"),
-    smallButton(ns("saveBtn"), "Save",  form.ids = ns("ace")),
+    smallButton(ns("saveBtn"), "Save Preferences",  form.ids = ns("ace")),
   	HTML("</td><td>"),
     smallButton(ns("defaultBtn"), "Default",form.ids = ns("ace")),
   	HTML("</td></tr></table>"),
@@ -198,4 +208,39 @@ set.tg.pref = function(pref,tg) {
 
 	set.tg.util(tg = tg, util.funs=util.funs)
 	#oco.df = tg$oco.df
+}
+
+
+pref.class.info.panels = function(pref.classes) {
+  restore.point("pref.class.info.panels")
+  li = lapply(names(pref.classes), function(class) {
+    pc = pref.classes[[class]]
+    ex = pref.class.example.code(pc, class)
+    pre.html = HTML(paste0('<pre style="tab-size: 4"><span class="inner-pre" style="font-size: small">',ex,'</span></pre>'))
+    tabPanel(title=str.left.of(class,"Util"),value=class,
+      HTML(paste0("<p style='padding-top: 4px; line-height: 1.1'>",pc$descr," Example:</p>")), pre.html
+    )
+  })
+  ui = withMathJax(do.call(tabsetPanel, c(list(id="prefInfoTabset"),li)))
+  ui
+}
+
+pref.class.example.code = function(pc, class=pc$class) {
+  par.txt = ""
+  if (NROW(pc$params)>0) {
+    param.code = lapply(names(pc$params), function(param) {
+      p = pc$params[[param]]
+      str = paste0("\t\t", param, ": ", p$default)
+      if (!is.null(p$descr))
+        str = paste0(str," # ",p$descr)
+      str
+    })
+    param.code = paste0(param.code,collapse="\n")
+    par.txt = paste0("\n\tparams:\n", param.code)
+  }
+
+
+  name = first.non.null(pc$defaultName, class)
+  yaml = paste0(name,":\n\tclass: ",class,par.txt)
+  yaml
 }

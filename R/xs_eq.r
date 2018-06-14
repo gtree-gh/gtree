@@ -14,6 +14,7 @@ xs.show.eq.tab = function(gameId, xs=app$xs, app=getApp()) {
   ui = xs.eq.ui(gameId)
   appendToHTML(selector="#mainDiv", as.character(hidden_div(id=divId, ui)))
   w2tabs.select("xsTabs", tabId)
+  xs.show.help("eq")
 }
 
 
@@ -65,15 +66,19 @@ xs.eq.ui = function(gameId, xs = app$xs, app=getApp()) {
 
 	ui = tagList(
 		h5(paste0("Equilibrium analysis of ", gameId)),
-		HTML("<table><tr><td valign='top'>"),
+		HTML("<table><tr><td valign='top' style='padding-right: 1em'>"),
 		selectizeInput(ns("variants"),label="Variants",choices = xeq$variants,selected = xeq$variants, multiple=TRUE),
 		selectizeInput(ns("prefs"),label="Preferences",choices = names(xeq$prefs),selected = "payoff", multiple=TRUE),
-		checkboxInput(ns("background"),label="Solve as background jobs",value = TRUE),
+		tags$script(HTML(paste0('$("#', ns("variants"),'").selectize();'))),
+		tags$script(HTML(paste0('$("#', ns("prefs"),'").selectize();'))),
+	  if (isTRUE(xs$devel.features))
+	    checkboxInput(ns("background"),label="Background job",value = TRUE),
 		HTML("</td><td valign='top'>"),
+	  selectInput(ns("solvemode"),label="Solve for",choices = xeq$solve.modes),
 		numericInput(ns("branchingLimit"),label="Branching limit",value = xeq$branching.limit),
 		numericInput(ns("spLimit"),label="Strategy Profiles Limit",value = xeq$sp.limit),
-		selectInput(ns("reduce"),label="Reduce game by Eliminating some dominated moves",choices = list("No reduction"="noreduce", "Reduce"="reduce","Both"="both")),
-		selectInput(ns("solvemode"),label="Solve for",choices = xeq$solve.modes),
+	  if (isTRUE(xs$devel.features))
+		  selectInput(ns("reduce"),label="Reduce game by Eliminating some dominated moves",choices = list("No reduction"="noreduce", "Reduce"="reduce","Both"="both")),
 		HTML("</td></tr></table>"),
 		smallButton(ns("gametreeBtn"),"Gametree", "data-form-selector"=form.sel),
 		smallButton(ns("solveBtn"),"Solve", "data-form-selector"=form.sel),
@@ -124,6 +129,10 @@ xeq.solve = function(xeq, formValues,clear=TRUE,  never.load=TRUE, solvemode=NUL
 	variants = unlist(formValues[[ns("variants")]])
 	pref_names = unlist(formValues[[ns("prefs")]])
 	reduce.method = unlist(formValues[[ns("reduce")]])
+	if (is.null(reduce.method))
+	  reduce.method = "noreduce"
+
+
 	branching.limit = unlist(formValues[[ns("branchingLimit")]])
 	sp.limit = unlist(formValues[[ns("spLimit")]])
 	if (is.null(solvemode))
@@ -354,7 +363,7 @@ xeq.tg.info.df = function(xeq,ids = names(xeq$tg.li),...) {
 
 	mat = matrix(nrow=9, byrow = TRUE,c(
 		"Outcomes",no.oco,
-		"Info sets (? moves)", paste0(no.ise," (",avg.moves,")"),
+		"Info sets (avg. # moves)", paste0(no.ise," (",avg.moves,")"),
 		"Subgames", no.sg,
 		"Strat-profiles...",rep("",length(ids)),
 		"...normal-form",no.all.sp,
@@ -472,7 +481,7 @@ xeq.show.conditional.eqo = function(xeq, app=getApp()) {
   )))
 
   ui = div(
-    h4("Conditional equilibria"),
+    h5("Conditional equilibrium outcomes given an action is (unexpectedly) fixed"),
     ui,
     uiOutput(xeq$ns("condEqoOutputUI"))
 

@@ -13,7 +13,7 @@ examples.xsApp = function() {
 }
 
 
-xsApp = function(projects.dir, project=1, use.otree=FALSE, otree.dir=NULL, otree.url="http://localhost:8000", never.load.tg = FALSE, demo.mode=FALSE) {
+xsApp = function(projects.dir, project=1, use.otree=FALSE, otree.dir=NULL, otree.url="http://localhost:8000", never.load.tg = FALSE, demo.mode=FALSE, devel.features=FALSE) {
   restore.point("xsApp")
 
   library(shinyEventsUI)
@@ -29,10 +29,13 @@ xsApp = function(projects.dir, project=1, use.otree=FALSE, otree.dir=NULL, otree
   xs$otree.url = otree.url
   xs$never.load.tg = never.load.tg
   xs$demo.mode = demo.mode
+  xs$devel.features = devel.features
 
   setwd(projects.dir)
 
   xs$projects = list.dirs(projects.dir, full.names=FALSE, recursive = FALSE)
+
+
 
   if (is.numeric(project)) {
     project = min(project, length(xs$projects))
@@ -49,6 +52,7 @@ xsApp = function(projects.dir, project=1, use.otree=FALSE, otree.dir=NULL, otree
   app$ui = xs.ui()
   appInitHandler(function(app,xs=app$xs,...) {
     xs$tabs=NULL
+    xs.show.help("main")
   })
 
   eventHandler("parseNodeEvent","parseNodeEvent", function(...) {
@@ -172,7 +176,8 @@ xs.ui = function(app=getApp(), xs=app$xs) {
       HTML("<table><tr><td>"),
       smallButton("editPrefsBtn","Preferences"),
       HTML("</td><td>"),
-      smallButton("showJobsBtn","Jobs"),
+      if (xs$devel.features)
+        smallButton("showJobsBtn","Jobs"),
       HTML("</td></tr></table>"),
       tree,
       cm
@@ -202,6 +207,7 @@ xs.ui = function(app=getApp(), xs=app$xs) {
   ui = bootstrapPage(
     contextMenuHeader(),
     selectizeDependency(),
+    mathjaxHeader(FALSE),
     fancytreeHeader(extensions=c("table","gridnav","dnd")),
     w2header(),
     aceEditorHeader(),
@@ -247,6 +253,10 @@ xs.ui = function(app=getApp(), xs=app$xs) {
   ui
 }
 
+xs.show.help = function(id=NULL, html = xecon.glob$help.texts[[id]]) {
+  restore.point("xs.show.help")
+  shinyEvents::setInnerHTML("xsHelpUI", html)
+}
 
 xs.edit.prefs.click = function(...,xs=app$xs, app=getApp()) {
 	xs.show.prefs.tab()
@@ -503,6 +513,7 @@ xs.show.game.tab = function(gameId, xs=app$xs, app=getApp()) {
   ui = xs.game.ui(gameId)
   appendToHTML(selector="#mainDiv", as.character(hidden_div(id=divId, ui)))
   w2tabs.select("xsTabs", tabId)
+  xs.show.help("game")
 }
 
 
@@ -718,6 +729,9 @@ xs.load.ressources = function() {
   #xecon.glob$xs_types = xs_types
   #xecon.glob$xs_types.json = xs_types.json
   #xecon.glob$xs_types.json = toJSON(xecon.glob$xs_types,dataframe = "rows", auto_unbox = TRUE)
+
+  file = system.file('spec/help_text.html', package='gtree')
+  xecon.glob$help.texts = parse.hashdot.yaml(merge.lines(readLines(file, warn=FALSE)))
 
 }
 

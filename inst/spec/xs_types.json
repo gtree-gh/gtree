@@ -28,7 +28,7 @@
   },
   "stage": {
     "expanded": false,
-    "help": "Each experiment consists of at least one stage. Click on the different fields for an explanation of the different fields that can be specified in a stage.<br><br>Here the structure of the stage is specified. The appearance of a stage can be customized by a 'page' for the stage. A convenient way to quickly design and test pages is to run the experiment, and then press 'Edit Page' to customize the appearance of the current stage.",
+    "help": "Each experiment consists of at least one stage. Click on the different fields for an explanation. Right click to add a new stage or to delete or duplicate the current stage.<br><br>The appearance of a stage can be customized by a 'page' for the stage. A convenient way to quickly design pages is to run the experiment, and then press 'Edit Page' to customize the appearance of the current stage.",
     "fields": [
       {
         "name": "name",

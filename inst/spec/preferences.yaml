@@ -1,10 +1,12 @@
 payoff:
 	class: payoff
 
+# Pure envy, no guilt
 envy_99:
-	class: envy
+	class: ineqAv
 	params:
-	  alpha: 0.99 # the degree of envy
+    alpha: 0.99 # the degree of envy
+    beta: 0 # no guilt
 
 ineq99_49:
 	class: ineqAv
