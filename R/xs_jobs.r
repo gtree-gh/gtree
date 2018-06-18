@@ -148,18 +148,17 @@ xs.jobs.ui = function(xs = app$xs, app=getApp(),...) {
 
 	ns = NS("jobs")
   ui = list(
-  	HTML("<table><tr><td>"),
-    smallButton(ns("refreshBtn"), "Refresh all"),
-  	HTML("</td><td>"),
-    smallButton(ns("clearBtn"), "Clear finished"),
-  	HTML("</td></tr></table>"),
+  	#HTML("<table><tr><td>"),
+    #smallButton(ns("refreshBtn"), "Refresh all"),
+  	#HTML("</td><td>"),
+  	#HTML("</td></tr></table>"),
+    #tags$br(),
+    uiOutput("jobsTableUI"),
     uiOutput(ns("msg")),
-    tags$br(),
-    uiOutput("jobsTableUI")
+    smallButton(ns("clearBtn"), "Clear all finished jobs")
   )
   dsetUI(ns("msg"),"")
-
-  buttonHandler(ns("refreshBtn"),fun = refresh.jobs.click)
+  #buttonHandler(ns("refreshBtn"),fun = refresh.jobs.click)
 	buttonHandler(ns("clearBtn"),fun = clear.finished.jobs.click)
   ui
 }
@@ -293,9 +292,14 @@ update.xs.job = function(job, update.file=TRUE, jobs.dir = get.jobs.dir(), xs=ap
     if (!is.null(xeq)) {
       restore.point("update.eq.tab.due.to.job")
       xeq$running.jobs = setdiff(names(xeq$running.jobs), job$tg.id)
-      xeq.show.tg.info(xeq)
+
+
+      xeq.show.running.info(xeq)
       if (job$state == "finished") {
         xeq.load.eq(xeq,eq.id = job$id, tg.id = job$tg.id)
+        solve.time = job$written.time-job$start.time
+        attr(xeq$eq.li[[job$tg.id]],"solve.time") <- solve.time
+        xeq.show.tg.info(xeq)
         xeq.show.eqo(xeq)
         xeq.show.conditional.eqo(xeq)
       }

@@ -86,10 +86,12 @@ xs.eq.ui = function(gameId, xs = app$xs, app=getApp()) {
     uiOutput(ns("tgmsg")),
 		br(),
 		uiOutput(ns("tginfo")),
+		uiOutput(ns("eqJobRunningInfo")),
 		uiOutput(ns("eqsUI")),
 		uiOutput(ns("condEqoUI"))
 
 	)
+
 
 	buttonHandler(ns("gametreeBtn"),function(formValues,...) {
 		restore.point("xeqSolveClick")
@@ -112,6 +114,7 @@ xs.eq.ui = function(gameId, xs = app$xs, app=getApp()) {
 		}
 	})
 
+	xeq.show.running.info(xeq)
 
 
 	ui
@@ -195,9 +198,10 @@ xeq.solve = function(xeq, formValues,clear=TRUE,  never.load=TRUE, solvemode=NUL
 				if (!just.make.tg) {
 				  eq.id = get.eq.id(tg=tg, solvemode = solvemode, mixed=mixed, just.spe=just.spe)
 					eq.li = get.eq(tg = tg,solver=solver, solvemode = solvemode, only.load = background)
-
 					# need to create new equilibrium in background
           if (is.null(eq.li) & background) {
+            tg.to.efg(tg=tg)
+
             xeq$running.jobs[[tg.id]] = eq.id
             # job is already running
             if (xs.is.job.running(eq.id)) next
@@ -266,6 +270,22 @@ xeq.load.eq = function(xeq, tg.id, eq.id, eq.dir=get.eq.dir(xeq$gameId), file = 
   xeq$eqo.li[[tg.id]] = eqo
 }
 
+
+xeq.show.running.info = function(xeq) {
+	ns = xeq$ns
+	restore.point("xeq.show.running.info")
+	num.jobs = length(xeq$running.jobs)
+	if (num.jobs==0) {
+	  ui = ""
+	} else {
+	  ui = p(style="padding-top: 1em",paste0(num.jobs," jobs running to solve equilibria..."))
+	}
+	setUI(ns("eqJobRunningInfo"),ui)
+	dsetUI(ns("eqJobRunningInfo"),ui)
+
+}
+
+
 xeq.show.tg.info = function(xeq) {
 	ns = xeq$ns
 	restore.point("xeq.show.tg.info")
@@ -275,13 +295,13 @@ xeq.show.tg.info = function(xeq) {
 
 	num.jobs = length(xeq$running.jobs)
   ui = tagList(
-    HTML(html),
-    if (num.jobs > 0)
-      p(paste0(num.jobs," jobs running to solve equilibria..."))
+    HTML(html)
   )
 
 	setUI(ns("tginfo"),ui)
 	dsetUI(ns("tginfo"),ui)
+
+	xeq.show.running.info(xeq)
 }
 
 
