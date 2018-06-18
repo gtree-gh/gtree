@@ -74,7 +74,7 @@ xs.eq.ui = function(gameId, xs = app$xs, app=getApp()) {
 	  if (isTRUE(xs$devel.features))
 	    checkboxInput(ns("background"),label="Background job",value = TRUE),
 		HTML("</td><td valign='top'>"),
-	  selectInput(ns("solvemode"),label="Solve for",choices = xeq$solve.modes),
+	  selectInput(ns("solvemode"),label="Solver",choices = xeq$solve.modes),
 		numericInput(ns("branchingLimit"),label="Branching limit",value = xeq$branching.limit),
 		numericInput(ns("spLimit"),label="Strategy Profiles Limit",value = xeq$sp.limit),
 	  if (isTRUE(xs$devel.features))
@@ -140,7 +140,9 @@ xeq.solve = function(xeq, formValues,clear=TRUE,  never.load=TRUE, solvemode=NUL
 	xeq$solvemode = solvemode
 
 	if (is.na(background))
-	    background = isTRUE(formValues[[ns("background")]] == "on")
+	    #background = isTRUE(formValues[[ns("background")]] == "on")
+	    background = !isTRUE(formValues[[ns("background")]] == "off")
+
 
 	if (reduce.method=="reduce") {
 		reduce.vec = TRUE
@@ -187,9 +189,8 @@ xeq.solve = function(xeq, formValues,clear=TRUE,  never.load=TRUE, solvemode=NUL
 					msg = paste0("Solve equilibria for variant ",variant," for pref ", pref$name,"... ")
 					timedMessage(ns("tgmsg"),msg=msg)
 				}
-				id = tg$tg.id
-				id = str.right.of(id,paste0(tg$gameId,"_"))
-				xeq$tg.li[[id]] = tg
+				tg.id = tg$tg.id
+				xeq$tg.li[[tg.id]] = tg
 
 				if (!just.make.tg) {
 				  eq.id = get.eq.id(tg=tg, solvemode = solvemode, mixed=mixed, just.spe=just.spe)
@@ -197,18 +198,20 @@ xeq.solve = function(xeq, formValues,clear=TRUE,  never.load=TRUE, solvemode=NUL
 
 					# need to create new equilibrium in background
           if (is.null(eq.li) & background) {
-            xeq$running.jobs[[id]] = eq.id
+            xeq$running.jobs[[tg.id]] = eq.id
             # job is already running
             if (xs.is.job.running(eq.id)) next
 
             job = start.gambit.job(tg=tg,solver=solver, solvemode = solvemode, eq.id=eq.id)
             xs$job.li[[job$id]] = job
           } else {
-  					xeq$eq.li[[id]] = eq.li
+  					xeq$eq.li[[tg.id]] = eq.li
   					eqo = eq.outcomes(eq.li, tg=tg)
-  					eqo$.id = rep(id,NROW(eqo))
+
+  					short.id = str.right.of(tg.id, paste0(tg$gameId,"_"))
+  					eqo$.id = rep(short.id,NROW(eqo))
   					eqo = select(eqo, .id, everything())
-  					xeq$eqo.li[[id]] = eqo
+  					xeq$eqo.li[[tg.id]] = eqo
           }
 
 				} else {
@@ -246,6 +249,23 @@ xeq.solve = function(xeq, formValues,clear=TRUE,  never.load=TRUE, solvemode=NUL
 
 }
 
+
+xeq.load.eq = function(xeq, tg.id, eq.id, eq.dir=get.eq.dir(xeq$gameId), file = file.path(eq.dir, paste0(eq.id,".eq"))) {
+  restore.point("xeq.load.eq")
+
+  file = file.path(eq.dir, paste0(eq.id,".eq"))
+	eq.li = readRDS(file)$eq.li
+
+  tg = xeq$tg.li[[tg.id]]
+  xeq$eq.li[[tg.id]] = eq.li
+  eqo = eq.outcomes(eq.li, tg=tg)
+
+  short.id = str.right.of(tg.id, paste0(tg$gameId,"_"))
+  eqo$.id = rep(short.id,NROW(eqo))
+  eqo = select(eqo, .id, everything())
+  xeq$eqo.li[[tg.id]] = eqo
+}
+
 xeq.show.tg.info = function(xeq) {
 	ns = xeq$ns
 	restore.point("xeq.show.tg.info")
@@ -255,9 +275,9 @@ xeq.show.tg.info = function(xeq) {
 
 	num.jobs = length(xeq$running.jobs)
   ui = tagList(
+    HTML(html),
     if (num.jobs > 0)
-      p(paste0(num.jobs," jobs running to solve equilibria...")),
-    HTML(html)
+      p(paste0(num.jobs," jobs running to solve equilibria..."))
   )
 
 	setUI(ns("tginfo"),ui)
@@ -285,12 +305,12 @@ xeq.show.eqo = function(xeq) {
 	}
 
 
-	html = html.table(eqo.df)
+	html = html.table(select(eqo.df,-.outcome,-eq.ind,-numPlayers,-variant))
 
 	compute.expected = TRUE
 	if (compute.expected) {
 		eeqo.df = expected.eq.outcomes(eqo.df,group.vars = c(".id","eqo.ind"))
-		html2 = html.table(eeqo.df)
+		html2 = html.table(select(eeqo.df,-.outcome,-numPlayers,-variant))
 	}
 	ui = tagList(
 		if (compute.expected) {
@@ -427,10 +447,9 @@ example.show.conditional.eqo = function() {
 # What if we filter a transformed variable????
 xeq.show.conditional.eqo = function(xeq, app=getApp()) {
   restore.point("xeq.show.conditional.eqo")
-
   ns = NS(paste0(xeq$gameId,"-eqo-filter"))
 
-  if (isTRUE(xeq$solvemode=="gametree")) {
+  if (isTRUE(xeq$solvemode=="gametree") | length(xeq$eqo.li) == 0) {
 		ui = p("")
 		setUI(ns("condEqoUI"),ui)
 		dsetUI(ns("condEqoUI"),ui)

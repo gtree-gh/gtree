@@ -4,7 +4,7 @@ xecon.glob = new.env()
 
 examples.xsApp = function() {
 	set.storing(TRUE)
-	restore.point.options(display.restore.point = !TRUE)
+	restore.point.options(display.restore.point = TRUE)
   projects.dir = "D:/libraries/gtree"
   app = xsApp(projects.dir, project="myproject", never.load.tg=FALSE, demo.mode = FALSE)
   viewApp(app,launch.browser = TRUE)
@@ -19,7 +19,7 @@ xsApp = function(projects.dir, project=1, use.otree=FALSE, otree.dir=NULL, otree
   library(shinyEventsUI)
   addXEconRessourcePath()
   xs.load.ressources()
-
+  options(scipen=999)
   app = eventsApp()
   app$xs = xs = new.env()
 
@@ -176,7 +176,7 @@ xs.ui = function(app=getApp(), xs=app$xs) {
       HTML("<table><tr><td>"),
       smallButton("editPrefsBtn","Preferences"),
       HTML("</td><td>"),
-      if (xs$devel.features)
+      if (TRUE | xs$devel.features)
         smallButton("showJobsBtn","Jobs"),
       HTML("</td></tr></table>"),
       tree,
@@ -232,6 +232,13 @@ xs.ui = function(app=getApp(), xs=app$xs) {
   	#if (str.starts.with(tabId,"tab_eq_")) {
   	#	w2tabs.destroy.tab.content(divId)
   	#}
+
+  	# Remove xeq.li if the tab has changed
+    if (str.starts.with(tabId,"tab_eq_")) {
+      gameId = str.right.of(tabId,"tab_eq_")
+      xs$xeq.li = xs$xeq.li[setdiff(names(xs$eq.li),gameId)]
+    }
+
 
     xs$tabs = setdiff(xs$tabs, tabId)
   })

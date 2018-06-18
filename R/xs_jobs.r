@@ -44,7 +44,7 @@ start.gambit.job = function(tg, mixed=FALSE, just.spe=TRUE, efg.file=tg.efg.file
   pid  = exec_background(cmd,args = args,std_out = out.file)
 
 
-  job = gambit.job.object(id=eq.id, pid=pid, tg=tg, out.file=out.file,  is.finished=FALSE)
+  job = gambit.job.object(id=eq.id, pid=pid, tg=tg, out.file=out.file,  state="running")
 
   # Save job object.
   # This allows to continue monitoring jobs
@@ -58,8 +58,9 @@ start.gambit.job = function(tg, mixed=FALSE, just.spe=TRUE, efg.file=tg.efg.file
 
 
 
-gambit.job.object = function(id, pid=NA, tg, out.file, start.time=Sys.time(), is.finished=FALSE) {
-  as.environment(nlist(id=id, pid=pid, tg.id = tg$tg.id, gameId = tg$gameId,variant=tg$variant, jg.hash=tg$jg.hash, out.file, start.time=start.time, written.time=NA, last.check.time = start.time, is.finished, eq.li=NULL))
+gambit.job.object = function(id, pid=NA, tg, out.file, start.time=Sys.time(), state="running") {
+
+  as.environment(nlist(id=id, pid=pid, tg.id = tg$tg.id, gameId = tg$gameId,variant=tg$variant, jg.hash=tg$jg.hash, out.file, start.time=start.time, written.time=NA, last.check.time = start.time, state, eq.li=NULL))
 }
 
 
@@ -79,12 +80,19 @@ save.job.eq.li = function(job,eq.li=job$eq.li, eq.id = job$id,  eq.dir=get.eq.di
 }
 
 
-xs.load.job.li = function(jobs.dir = get.jobs.dir()) {
+xs.load.job.li = function(jobs.dir = get.jobs.dir(), old.jobs=NULL) {
   restore.point("xs.load.job.li")
 
   files = list.files(jobs.dir, glob2rx("*.job"),full.names = TRUE)
 
   job.li = lapply(files, function(file) {
+    # Return already existing job
+    if (length(old.jobs)>0) {
+      job.id = tools::file_path_sans_ext(basename(file))
+      old.job = old.jobs[[job.id]]
+      if (!is.null(old.job)) return(old.job)
+    }
+
     job = readRDS(file)
   })
   names(job.li) = sapply(job.li, function(job) job$id)
@@ -98,7 +106,7 @@ job.li.to.job.df = function(job.li=xs.load.job.li()) {
 
   li = lapply(job.li, function(job) {
     jl = as.list(job)
-    cols = c("id", "pid","is.finished", "start.time","last.check.time", "written.time", "out.file")
+    cols = c("id", "pid","state", "start.time","last.check.time", "written.time", "out.file")
     do.call(data_frame,jl[cols])
   })
   df = bind_rows(li)
@@ -128,6 +136,8 @@ xs.show.jobs.tab = function(xs=app$xs, app=getApp(), select=TRUE) {
 
   xs$job.li = xs.load.job.li()
   set.jobs.table.ui()
+
+  start.jobs.observer()
 
   if (select)
     w2tabs.select("xsTabs", tabId)
@@ -161,47 +171,79 @@ set.jobs.table.ui = function(xs = app$xs, app=getApp(),job.li = xs$job.li,...) {
 
   if (NROW(df)>0) {
 
-    df$running =ifelse(df$is.finished,
-      format(df$written.time-df$start.time, digits=3),
-      format(Sys.time()-df$start.time, digits=3)
-    )
+    df$running = sapply(1:NROW(df), function(row) {
+      ifelse(df$state[row]!="running",
+        format(df$written.time[row]-df$start.time[row], digits=3),
+        format(Sys.time()-df$start.time[row], digits=3)
+      )
+    })
 
     df$last.check =format(Sys.time()-df$last.check.time,digits=3)
 
-    df$state = ifelse(df$is.finished,"finished","running")
-
     smallButton("id","label")
-    stop.btns =  paste0('<button id="job-stop-btn-',df$id,'" style="" type="button" class="btn btn-default action-button btn-xs xs-job-stop-btn">Cancel</button>')
-    clear.btns =  paste0('<button id="job-clear-btn-',df$id,'" style="" type="button" class="btn btn-default action-button btn-xs xs-job-clear-btn">Clear</button>')
+    stop.btns =  paste0('<button id="job-stop-btn-',df$id,'" style="" type="button" data-jobid="', df$id,'" class="btn btn-default action-button btn-xs xs-job-stop-btn">Cancel Job</button>')
+    clear.btns =  paste0('<button id="job-clear-btn-',df$id,'" style="" type="button" data-jobid="', df$id,'" class="btn btn-default action-button btn-xs xs-job-clear-btn">Clear</button>')
 
-    df$btns = ifelse(df$is.finished, clear.btns, stop.btns)
+    df$btns = ifelse(df$state != "running", clear.btns, stop.btns)
 
-    bg = ifelse(df$is.finished,"#dddddd","#ffffff")
+    bg = ifelse(df$state != "running","#dddddd","#ffffff")
 
     df = df %>%
       arrange(desc(start.time)) %>%
-      select(btns, state, running, id, last.check,pid)
+      select(btns, state, running, id, start.time,pid)
 
-    table = html.table(df,col.names = c("","State","Runtime","Name","Last check","PID"),bg.color = bg)
+    table = html.table(df,col.names = c("","State","Runtime","Name","Start","PID"),bg.color = bg)
 
   } else {
     table = ("<p>There are currently no jobs to solve equilibria.</p>")
   }
+
+  classEventHandler("xs-job-stop-btn",event = "click", stop.job.click)
+  classEventHandler("xs-job-clear-btn",event = "click", clear.job.click)
 
   setUI("jobsTableUI",HTML(table))
   dsetUI("jobsTableUI",HTML(table))
 }
 
 
-refresh.jobs.click = function(...,xs=app$xs, app=getApp()) {
+start.jobs.observer = function(millis=1000, xs=app$xs, app=getApp()) {
+  restore.point("start.jobs.observer")
+
+  if (is.null(app$jobs.observer)) {
+    app$jobs.observer = observe({
+      refresh.jobs(reload.jobs=FALSE)
+      invalidateLater(millis)
+    })
+  }
+}
+
+stop.jobs.observer = function(..., app=getApp()) {
+  if (!is.null(app$jobs.observer)) {
+    app$jobs.observer$destroy()
+    app$jobs.observer = NULL
+  }
+}
+
+refresh.jobs.click = function(...) refresh.jobs(...)
+
+refresh.jobs = function(..., reload.jobs = TRUE,xs=app$xs, app=getApp()) {
   restore.point("refresh.jobs.click")
 
-  job.li = xs$job.li
-  for (job in job.li) {
-    update.xs.job(job)
-  }
-  set.jobs.table.ui(job.li = xs$job.li)
 
+  # Load new jobs
+  if (reload.jobs)
+    xs$job.li = xs.load.job.li(old.jobs = xs$job.li)
+
+  job.li = xs$job.li
+  updated = reload.jobs
+  for (job in job.li) {
+    if (job$state=="running") {
+      updated = TRUE
+      update.xs.job(job)
+    }
+  }
+  if (updated)
+    set.jobs.table.ui(job.li = xs$job.li)
 }
 
 
@@ -230,7 +272,7 @@ is.running.gambit.job = function(job) {
 
 
 update.xs.job = function(job, update.file=TRUE, jobs.dir = get.jobs.dir(), xs=app$xs) {
-  if (job$is.finished) return(job)
+  #if (job$state != "running") return(job)
 
   running = is.running.gambit.job(job)
   job$last.check.time = Sys.time()
@@ -240,11 +282,25 @@ update.xs.job = function(job, update.file=TRUE, jobs.dir = get.jobs.dir(), xs=ap
     restore.point("finish.job")
     xs.make.job.eq.li(job)
     save.job.eq.li(job)
-    job$is.finished = TRUE
+    if (job$state == "running")
+      job$state = "finished"
     fi = file.info(job$out.file)
     job$written.time = if( fi$mtime > job$start.time ) {fi$mtime} else { job$start.time}
-
     saveRDS(job, file.path(jobs.dir,paste0(job$id,".job")))
+
+    # Update equilibrium tab
+    xeq = app$xs$xeq.li[[job$gameId]]
+    if (!is.null(xeq)) {
+      restore.point("update.eq.tab.due.to.job")
+      xeq$running.jobs = setdiff(names(xeq$running.jobs), job$tg.id)
+      xeq.show.tg.info(xeq)
+      if (job$state == "finished") {
+        xeq.load.eq(xeq,eq.id = job$id, tg.id = job$tg.id)
+        xeq.show.eqo(xeq)
+        xeq.show.conditional.eqo(xeq)
+      }
+    }
+
   }
 
   file.info
@@ -260,10 +316,48 @@ xs.make.job.eq.li = function(job) {
 
 xs.is.job.running = function(job.id=job$id,job = xs$job.li[[job.id]], xs= app$xs, app=getApp()) {
   if (is.null(job)) return(FALSE)
-  !isTRUE(job$is.finished)
+  isTRUE(job$state == "running")
+}
+
+stop.job.click = function(id,data,...,xs=app$xs, app=getApp()) {
+  restore.point("stop.job.click")
+  job = xs$job.li[[data$jobid]]
+  update.xs.job(job)
+
+  if (job$state == "running") {
+    res = tools::pskill(job$pid)
+    cat("\nKilled job ", job$pid, "? ", res)
+
+    job$state = "cancelled"
+    job$written.time = Sys.time()
+    update.xs.job(job)
+  }
+  set.jobs.table.ui(job.li = xs$job.li)
+}
+
+
+clear.job.click = function(id,data,...,xs=app$xs, app=getApp()) {
+  restore.point("clear.job.click")
+  jobs.dir = get.jobs.dir()
+  job.id = data$jobid
+
+  file = file.path(jobs.dir,paste0(job.id,".job"))
+  try(file.remove(file))
+
+  refresh.jobs()
 }
 
 
 clear.finished.jobs.click = function(...,xs=app$xs, app=getApp()) {
+  jobs.dir = get.jobs.dir()
+
+  for (job in xs$job.li) {
+    if (!isTRUE(job$state == "running")) {
+      file = file.path(jobs.dir,paste0(job$id,".job"))
+      try(file.remove(file))
+    }
+  }
+
+  refresh.jobs.click()
 }
 
