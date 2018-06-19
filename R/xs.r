@@ -205,6 +205,7 @@ xs.ui = function(app=getApp(), xs=app$xs) {
 
   www.dir = system.file('www', package='gtree')
   ui = bootstrapPage(
+    htmlDependency("font-awesome","4.7.0", c(href = "shared/font-awesome"), stylesheet = "css/font-awesome.min.css"),
     contextMenuHeader(),
     selectizeDependency(),
     mathjaxHeader(FALSE),
@@ -212,8 +213,9 @@ xs.ui = function(app=getApp(), xs=app$xs) {
     w2header(),
     aceEditorHeader(),
     jqueryLayoutHeader(),
-    handsontableHeader(),
+    #handsontableHeader(),
     includeCSS(paste0(www.dir,"/xs.css")),
+    singleton(tags$head(tags$script(src="xecon/varpar_table.js"))),
     singleton(tags$head(tags$script(src="xecon/xs_gametree.js"))),
     singleton(tags$head(tags$link(href="xecon/xs.css"))),
     panes,
@@ -551,11 +553,10 @@ xs.game.ui = function(gameId, xs = app$xs, app=getApp(), jg= try(get.jg(gameId))
   table = paste0('<table id="',treeId,'"  width="">
     <colgroup>
     <col></col>
-    <col></col>
     <col width="*"></col>
     </colgroup>
     <thead>
-        <tr> <th>Nodes</th> <th>Value</th> <th>Info</th></tr>
+        <tr><th></th><th></th></tr>
     </thead>
     <tbody>
     </tbody>

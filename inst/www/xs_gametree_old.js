@@ -31,10 +31,37 @@ initGame: function(gameId, content) {
   //$(function(){xecon.initGameVarPar(game)});
 },
 
-initGameVarParHtml: function(game) {
+initGameVarPar: function(game) {
   var data = game.content.game.varpar;
-  html = varParTableHTML(data,game.varparId);
-  return html;
+  data[0][0] = "variants↓ params→";
+
+
+  var opts = {
+  	data: data,
+    width: "100%",
+    height: "200",
+    contextMenu: true,
+    allowInsertColumn: true,
+    allowDeleteColumn: true,
+    allowInsertRow: true,
+    fixedColumnsLeft: 1,
+    fixedRowsTop: 2,
+
+    manualColumnResize: true,
+    manualColumnMove: true,
+    /*
+    manualRowResize: true,
+    manualColumnMove: true,
+    manualRowMove: true,
+    */
+    cell: [
+      {row: 0, col: 0, readOnly: true}
+    ]
+  };
+
+  var hot = new Handsontable(document.getElementById(game.varparId),opts);
+  //hot.loadData(data);
+  game.varparHot = hot;
 },
 
 parseAndSendGame: function(gameId, mode) {
@@ -277,13 +304,12 @@ initGameTree: function(game) {
         if (xs.nodeType === "varparTable") {
           var game = xecon.games[xs.info.gameId];
           //alert("render varpar");
-          tab_html = xecon.initGameVarParHtml(game);
-
 
           //html = '<div width="100%" height="300" style="resize: both; overflow: auto;"><div id="'+game.varparId+'"></div></div>';
-          html = '<div id="'+game.varparId+'">'+tab_html+'</div>'+
+          html = '<div id="'+game.varparId+'"></div>'+
             '<div class="gameTreeMsg_'+game.gameId+'" id="'+xs.inputId+'__Msg" style="margin:0, padding:0, color: #aa0000;"></div>';
           cols.eq(1).html(html);
+          xecon.initGameVarPar(game);
           return;
         }
 
