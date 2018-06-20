@@ -125,7 +125,8 @@ xeq.solve = function(xeq, formValues,clear=TRUE,  never.load=TRUE, solvemode=NUL
 	ns = xeq$ns
 
 	if (clear) {
-		xeq$tg.li = xeq$eq.li = xeq$eqo.li = list()
+		xeq$rg = 	get.rg(gameId=xeq$gameId)
+	  xeq$tg.li = xeq$eq.li = xeq$eqo.li = list()
 	}
   xeq$running.jobs = list()
 
@@ -145,6 +146,9 @@ xeq.solve = function(xeq, formValues,clear=TRUE,  never.load=TRUE, solvemode=NUL
 	if (is.na(background))
 	    #background = isTRUE(formValues[[ns("background")]] == "on")
 	    background = !isTRUE(formValues[[ns("background")]] == "off")
+
+	# Internal solver is always run in foreground
+	if (solvemode=="spe_xs") background=FALSE
 
 
 	if (reduce.method=="reduce") {
@@ -166,6 +170,7 @@ xeq.solve = function(xeq, formValues,clear=TRUE,  never.load=TRUE, solvemode=NUL
 		timedMessage(ns("tgmsg"),msg=msg,millis = Inf)
 	}
 	variant = xeq$sel.variants[[1]]
+
 	for (variant in xeq$sel.variants) {
 		msg = paste0("Create or load game tree for variant ",variant,"... ")
 		timedMessage(ns("tgmsg"),msg=msg)
