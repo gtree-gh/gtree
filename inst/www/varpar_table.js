@@ -1,3 +1,36 @@
+//varParGetValues("xsVarPar_LureOfAuthorityReduced")
+//varParGetValues("xsVarPar_Cournot3")
+
+jqAllValues = function(jq_vec) {
+  return $(jq_vec).map(function() {
+    return $(this).val();
+  }).get();
+};
+
+varParGetValues = function(prefix) {
+  var table = $("#"+prefix+"_varpar_table");
+
+  var variants = jqAllValues(table.find(".varpar_variant"));
+  var pars = jqAllValues(table.find(".varpar_par"));
+  var vals = jqAllValues(table.find(".varpar_val"));
+
+  var dat = new Array(variants.length+1);
+
+  dat[0] = [""].concat(pars);
+  for (var iv=0;iv<variants.length;iv++) {
+    var vec = [];
+    vec.push(variants[iv]);
+    var ind = iv;
+    for (var ip=0;ip<pars.length;ip++) {
+      //console.log("iv = "+iv+" ip = "+ip+" ind = "+ind+" vals[ind] = "+vals[ind]);
+      vec.push(vals[ind]);
+      ind = ind+variants.length;
+    }
+    dat[iv+1] = vec;
+  }
+  return dat;
+};
+
 varParTableHTML = function(varpar, prefix) {
   var data = varpar;
   data[0][0] = "parameter↓ variants→";
@@ -40,7 +73,7 @@ varParTableHTML = function(varpar, prefix) {
     code = code + "</tr>";
   }
 
-  html = "<table><tbody>"+var_btn + head + code + "</tbody></table>";
+  html = "<table id='"+prefix+"_varpar_table'><tbody>"+var_btn + head + code + "</tbody></table>";
 
   return html;
 };
@@ -93,7 +126,7 @@ $(document).on("click",".addVariantBtn",function() {
   $(trs[0]).find('td:nth-child('+col+')').after(code);
 
   // Add variant name input
-  code = "<td><input style='width: 12em;' type='text' class='varpar_par' value=''/></td>";
+  code = "<td><input style='width: 12em;' type='text' class='varpar_variant' value=''/></td>";
   $(trs[1]).find('td:nth-child('+col+')').after(code);
 
 

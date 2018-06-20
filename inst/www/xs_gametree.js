@@ -54,13 +54,9 @@ parseSpecialNodeContent: function(node, level) {
   var xs = node.data.xs;
   if (xs.nodeType === "varpar") {
     var game = xecon.games[xs.info.gameId];
-    var data = null;
-    if (typeof game.varparHot==='undefined') {
-      data = game.content.game.varpar;
-    } else {
-      data = game.varparHot.getData();
-    }
-    return(data);
+    var prefix = game.varparId;
+    var data = varParGetValues(prefix);
+    return data;
   }
   return null;
 },
