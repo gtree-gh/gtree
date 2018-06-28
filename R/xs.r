@@ -529,7 +529,7 @@ xs.show.game.tab = function(gameId, xs=app$xs, app=getApp()) {
   jg = try(get.jg(gameId))
   ui = xs.game.ui(gameId, jg=jg)
   if (is(jg,"try-error")) jg=NULL
-  appendToHTML(selector="#mainDiv", as.character(hidden_div(id=divId, ui)))
+  appendToHTML(selector="#mainDiv", as.character(hidden_div(id=divId, style="padding-top: 4px;", ui)))
   w2tabs.select("xsTabs", tabId)
   xs.show.help("game", jg=jg)
 }
@@ -576,7 +576,7 @@ xs.game.ui = function(gameId, xs = app$xs, app=getApp(), jg= try(get.jg(gameId))
   	# varpar table
 		#HTML(paste0('<div id="',varparId,'"></div>')),
   	# game tree
-    div(
+    div(style="padding-top: 4px",
       HTML(table)
     ),
     tags$script(HTML(js))

@@ -503,10 +503,10 @@ xeq.show.conditional.eqo = function(xeq, app=getApp()) {
 
   input.li = lapply(vars, function(var) {
     vals = c("",var.vals[[var]])
-    len = max(3,nchar(var), nchar(as.character(vals)), na.rm=TRUE)
+    len = max(6,nchar(var), nchar(as.character(vals)), na.rm=TRUE)
     tagList(
       selectInput(ns(var),label=var,choices = vals ,selected = NULL, multiple = TRUE,width = paste0(len,"em"),selectize = FALSE)
-      #,tags$script(HTML(paste0('$("#',ns(var),'").selectize();')))
+      #,tags$script(HTML(paste0('$("#',ns(var),'").selectize({dropdownParent: "body"});')))
     )
   })
 
@@ -516,6 +516,7 @@ xeq.show.conditional.eqo = function(xeq, app=getApp()) {
   )))
 
   ui = div(
+    hr(),
     h5("Conditional equilibrium outcomes given an action is (unexpectedly) fixed"),
     ui,
     uiOutput(xeq$ns("condEqoOutputUI"))
@@ -529,22 +530,23 @@ xeq.show.conditional.eqo = function(xeq, app=getApp()) {
     args = list(...)
 
     # need to save values in a list of app
-    # since geIInputValue does not work
+    # since getInputValue does not work
     # nicely with dynamic UI
     var = str.right.of(id,"-eqo-filter-")
-    app$cond.eqo.val.list[[gameId]][[var]] = value[[1]]
+    app$cond.eqo.val.list[[gameId]][[var]] = value
     values = app$cond.eqo.val.list[[gameId]]
 
     restore.point("xeq.show.conditional.eqo.handler")
     cat("\nchanged")
-    empty = sapply(values, function(val) length(val)==0 | isTRUE(nchar(val)==0))
+    empty = sapply(values, function(val) length(val)==0 | isTRUE(any(nchar(val)==0)))
     values = values[!empty]
     if (length(values)==0) {
       dsetUI(xeq$ns("condEqoOutputUI"), HTML(""))
       return()
     }
 
-    cond = values
+    # Take grid of all combinations
+    cond = expand.grid(values)
 
     tg.ind = 1
     c.li = lapply(seq_along(xeq$tg.li), function(tg.ind){
@@ -556,9 +558,9 @@ xeq.show.conditional.eqo = function(xeq, app=getApp()) {
   		eqo
     })
     ceqo = bind_rows(c.li) %>%
-      select(-eq.ind,-is.eqo)
-    dupl = duplicated(ceqo)
-    ceqo = ceqo[!dupl,]
+      select(-eq.ind,-.outcome,-numPlayers) %>%
+	    select(everything(), ceqo.ind)
+
     html = html.table(ceqo)
     setUI(xeq$ns("condEqoOutputUI"), HTML(html))
     dsetUI(xeq$ns("condEqoOutputUI"), HTML(html))
