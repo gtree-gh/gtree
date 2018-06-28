@@ -33,6 +33,13 @@ varParGetValues = function(prefix) {
 
 varParTableHTML = function(varpar, prefix) {
   var data = varpar;
+  if (data.length <=1) {
+    data = [
+      ["","numPlayers","descr"],
+      ["base","",""]
+    ];
+  }
+
   data[0][0] = "parameter↓ variants→";
 
   var npar = data[0].length-1;
@@ -113,8 +120,6 @@ $(document).on("click",".addParBtn",function() {
 
 // Add a variant
 $(document).on("click",".addVariantBtn",function() {
-  alert("add variant");
-
   var col = $(this).closest("td").prevAll("td").length+1;
   var trs = $(this).closest("tbody").children("tr");
 

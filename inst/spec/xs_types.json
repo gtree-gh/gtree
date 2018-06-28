@@ -43,8 +43,8 @@
       },
       {
         "name": "player",
-        "type": "integer",
-        "min": 1,
+        "type": "formula",
+        "inputType": "textArea",
         "help": "Specify the players to which the stage is shown.<h4>Specifying the players.</h4>There are different ways to enter new players.<ul><li>If you leave the player field empty, the stage is shown to no player. Move of natures and other computations are performed, if the condition field of the stage evaluates to TRUE.</li><li>You can enter just a single number. E.g. '1', for player 1.</li><li>You can enter a list in YAML format. E.g. '[1,3]' for players 1 and 3.</li><li>You can enter an R formula preceeded by an '=' sign. E.g. '=1:3' for players 1,2 and 3.</li><li>An R formula can also reference to earlier specified parameters or variables. E.g. if nature draws the idendity of a proposer and stores the player number in an integer variable, 'proposer', we would set the player field in the proposer stage to '=proposer' for  YAML format that can take actions at this stage.</li></ul><h4>Action stages require a single player</h4>A stage that specifies actions must specify a single player only. If you want to build a game in which multiple players choose symmetric actions, e.g. a public good game. You must specify a separate stage for each player. We know that this is a bit inconvenient. Note, however, that stage pages can be easily duplicated and stage pages can be easily copied. We may include the possibility of multi-player stages with symmetric actions in a future version of gtree."
       },
       {
@@ -196,6 +196,7 @@
       {
         "name": "labels",
         "type": "formula",
+        "inputType": "textArea",
         "help": "Optionally a vector of labels. One label for each element of the set of possible moves. Will be used as default in pages and may lead to more informative data."
       }
     ]

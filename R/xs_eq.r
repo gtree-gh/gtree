@@ -329,21 +329,12 @@ xeq.show.eqo = function(xeq) {
 		return()
 	}
 
-
-	html = html.table(select(eqo.df,-.outcome,-eq.ind,-numPlayers,-variant))
-
-	compute.expected = TRUE
-	if (compute.expected) {
-		eeqo.df = expected.eq.outcomes(eqo.df,group.vars = c(".id","eqo.ind"))
-		html2 = html.table(select(eeqo.df,-.outcome,-numPlayers,-variant))
-	}
+	eeqo.df = expected.eq.outcomes(eqo.df,group.vars = c(".id","eqo.ind"))
+	eeo.html = html.table(select(eeqo.df,-.outcome,-numPlayers,-variant))
+	#eo.html = html.table(select(eqo.df,-.outcome,-eq.ind,-numPlayers,-variant))
 	ui = tagList(
-		if (compute.expected) {
-			tagList(
-				h5("Expected equilibrium outcomes:"), HTML(html2)
-			)
-		},
-		h5("Equilibrium outcomes:"), HTML(html)
+		h5("Expected equilibrium outcomes:"), HTML(eeo.html)
+		#,h5("Equilibrium outcomes:"), HTML(html)
 	)
 	setUI(ns("eqsUI"),ui)
 	dsetUI(ns("eqsUI"),ui)
@@ -555,13 +546,11 @@ xeq.show.conditional.eqo = function(xeq, app=getApp()) {
 
     cond = values
 
-    # currently works only for first tg
-    # need to adapt for while tg.li
     tg.ind = 1
     c.li = lapply(seq_along(xeq$tg.li), function(tg.ind){
       tg = xeq$tg.li[[tg.ind]]
       id = str.right.of(tg$tg.id,"_")
-      eqo = cond.eq.outcomes(eq.li = xeq$eq.li[[tg.ind]],cond=cond, tg=tg)
+      eqo = cond.eq.outcomes(eq.li = xeq$eq.li[[tg.ind]],cond=cond, tg=tg,expected = TRUE)
   		eqo$.id = rep(id,NROW(eqo))
   		eqo = select(eqo, .id, everything())
   		eqo
