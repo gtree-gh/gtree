@@ -82,7 +82,7 @@ xs.eq.ui = function(gameId, xs = app$xs, app=getApp()) {
 		HTML("</td></tr></table>"),
 		smallButton(ns("gametreeBtn"),"Gametree", "data-form-selector"=form.sel),
 		smallButton(ns("solveBtn"),"Solve", "data-form-selector"=form.sel),
-		#smallButton(ns("efgBtn"),"Downloa", "data-form-selector"=form.sel),
+		smallButton(ns("firstbestBtn"),"First Best", "data-form-selector"=form.sel),
     uiOutput(ns("tgmsg")),
 		br(),
 		uiOutput(ns("tginfo")),
@@ -114,11 +114,24 @@ xs.eq.ui = function(gameId, xs = app$xs, app=getApp()) {
 		}
 	})
 
+	buttonHandler(ns("firstbestBtn"),function(formValues,...) {
+		restore.point("xeqFirstBestClick")
+		ok = xeq.first.best(xeq=xeq, formValues=formValues, clear=TRUE)
+		if (ok) {
+			xeq.show.tg.info(xeq)
+			xeq.show.eqo(xeq)
+			xeq.show.conditional.eqo(xeq)
+		}
+	})
+
+
 	xeq.show.running.info(xeq)
 
 
 	ui
 }
+
+
 
 xeq.solve = function(xeq, formValues,clear=TRUE,  never.load=TRUE, solvemode=NULL, background=NA, xs=app$xs, app=getApp()) {
 	restore.point("xeq.solve")
@@ -256,6 +269,71 @@ xeq.solve = function(xeq, formValues,clear=TRUE,  never.load=TRUE, solvemode=NUL
 
 	return(TRUE)
 
+}
+
+
+xeq.first.best = function(xeq, formValues,clear=TRUE,  never.load=TRUE, xs=app$xs, app=getApp()) {
+	restore.point("xeq.first.best")
+	ns = xeq$ns
+
+	if (clear) {
+		xeq$rg = 	get.rg(gameId=xeq$gameId)
+	  xeq$tg.li = xeq$eq.li = xeq$eqo.li = list()
+	}
+  xeq$running.jobs = list()
+
+	variants = unlist(formValues[[ns("variants")]])
+	pref_names = unlist(formValues[[ns("prefs")]])
+
+	branching.limit = unlist(formValues[[ns("branchingLimit")]])
+	xeq$sel.variants = variants
+	xeq$sel.prefs = xeq$prefs[pref_names]
+	xeq$eqo.li = xeq$eq.li = list()
+
+	timedMessage(ns("tgmsg"),msg=paste0("Solve first best for variants ",paste0(variants,collapse=", ")))
+
+	msg.fun = function(...) {
+		msg = paste0(...)
+		timedMessage(ns("tgmsg"),msg=msg,millis = Inf)
+	}
+	variant = xeq$sel.variants[[1]]
+
+	for (variant in xeq$sel.variants) {
+		msg = paste0("Create or load decision tree for variant ",variant,"... ")
+		timedMessage(ns("tgmsg"),msg=msg)
+		org.tg = get.first.best.tg(gameId=xeq$gameId, variant=variant, rg=xeq$rg, msg.fun=msg.fun, never.load=never.load, branching.limit = branching.limit)
+
+		if (org.tg$kel$count>0) {
+    	timedMessage(ns("tgmsg"),paste0("There are problems:<br>",paste0(org.tg$kel$log, collapse="<br>\n")),millis = Inf)
+    	return(FALSE)
+  	}
+		for (pref in xeq$sel.prefs) {
+			tg = as.environment(as.list(org.tg))
+			set.tg.pref(pref,tg)
+      set.tg.welfare(tg)
+
+			msg = paste0("Solve first best for variant ",variant," for pref ", pref$name,"... ")
+			timedMessage(ns("tgmsg"),msg=msg)
+			tg.id = tg$tg.id
+			xeq$tg.li[[tg.id]] = tg
+
+			eq.id = tg.id
+			eq.li = compute.first.best(tg = tg,find.all.eq = TRUE)
+  		xeq$eq.li[[tg.id]] = eq.li
+  		eqo = eq.outcomes(eq.li, tg=tg)
+
+  		short.id = str.right.of(tg.id, paste0(tg$gameId,"_"))
+  		eqo$.id = rep(short.id,NROW(eqo))
+  		eqo = select(eqo, .id, everything())
+  		xeq$eqo.li[[tg.id]] = eqo
+		}
+	}
+
+  num.eq = length(xeq$tg.li)
+  num.running = length(xeq$running.jobs)
+  msg = paste0(num.eq, " first best strategies have been computed...")
+	timedMessage(ns("tgmsg"),msg=msg)
+	return(TRUE)
 }
 
 
